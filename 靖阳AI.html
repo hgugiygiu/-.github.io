@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>靖阳AI - 作文生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 15px 0;
+        }
+        
+        .title {
+            color: #1e88e5;
+            font-size: 2.2rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .chat-container {
+            flex: 1;
+            background-color: #8a2be2; /* 紫天蓝色 */
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.8rem;
+            opacity: 0.3; /* 透明度设置为30% */
+            text-align: center;
+            pointer-events: none;
+            font-weight: bold;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 18px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .user-message {
+            background-color: #4a90e2;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .ai-message {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .input-container {
+            display: flex;
+            padding: 10px 0;
+            gap: 10px;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .input-field:focus {
+            border-color: #1e88e5;
+        }
+        
+        .send-button {
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .send-button:hover {
+            background-color: #1565c0;
+        }
+        
+        .send-button:active {
+            transform: scale(0.95);
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 12px 16px;
+            border-radius: 18px;
+            margin: 8px 0;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .typing-dots {
+            display: inline-block;
+        }
+        
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #666;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: 0s; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .title {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1.5rem;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">靖阳AI</h1>
+    </div>
+    
+    <div class="chat-container" id="chatContainer">
+        <div class="subtitle">作文生成器</div>
+        <!-- 对话消息将在这里动态添加 -->
+    </div>
+    
+    <div class="input-container">
+        <input type="text" class="input-field" id="userInput" placeholder="请输入您的作文主题或要求...">
+        <button class="send-button" id="sendButton">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="white"/>
+            </svg>
+        </button>
+    </div>
+    
+    <div class="typing-indicator" id="typingIndicator">
+        <span>靖阳AI正在思考</span>
+        <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatContainer = document.getElementById('chatContainer');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            const typingIndicator = document.getElementById('typingIndicator');
+            
+            // 初始欢迎消息
+            addMessage('您好！我是靖阳AI，您的专属作文助手。请告诉我您想写什么类型的作文，我会为您生成一篇优美的文章。', 'ai');
+            
+            // 发送消息函数
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') return;
+                
+                // 添加用户消息
+                addMessage(message, 'user');
+                userInput.value = '';
+                
+                // 显示"正在输入"指示器
+                showTypingIndicator();
+                
+                // 模拟AI回复（实际应用中这里应该是API调用）
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    const aiResponse = generateAIResponse(message);
+                    addMessage(aiResponse, 'ai');
+                }, 1500);
+            }
+            
+            // 添加消息到聊天区域
+            function addMessage(text, sender) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message');
+                messageElement.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+                messageElement.textContent = text;
+                
+                chatContainer.appendChild(messageElement);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // 显示"正在输入"指示器
+            function showTypingIndicator() {
+                typingIndicator.style.display = 'block';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // 隐藏"正在输入"指示器
+            function hideTypingIndicator() {
+                typingIndicator.style.display = 'none';
+            }
+            
+            // 生成AI回复（模拟）
+            function generateAIResponse(userMessage) {
+                const responses = [
+                    `根据您的要求"${userMessage}"，我为您创作了以下作文：
+
+【标题：春天的脚步】
+
+春天悄无声息地来了，她带着温暖的阳光和轻柔的微风，唤醒了沉睡的大地。冰雪融化，小溪潺潺流淌，仿佛在演奏一首欢快的乐曲。柳树抽出嫩绿的枝条，在春风中轻轻摇曳，宛如少女的长发。
+
+田野里，金黄的油菜花开了，远远望去，像一片金色的海洋。蜜蜂和蝴蝶在花丛中忙碌地穿梭，为这美丽的春天增添了几分生机。孩子们脱去厚重的冬装，在草地上奔跑、嬉戏，他们的笑声如同银铃般清脆。
+
+春天是希望的季节，是生命的开始。她告诉我们，无论经历多么寒冷的冬天，温暖的春天总会到来。让我们珍惜这美好的春光，满怀希望地迎接每一个崭新的日子。`,
+
+                    `针对"${userMessage}"这个主题，我为您创作了以下文章：
+
+【标题：我的梦想】
+
+每个人心中都有一颗梦想的种子，我的梦想是成为一名作家，用文字记录生活的美好，传递温暖与力量。
+
+小时候，我最喜欢听妈妈讲故事。那些精彩的情节、生动的人物，像魔法一样吸引着我。从那时起，我就梦想着有一天也能创作出打动人心的故事。
+
+为了实现这个梦想，我坚持每天阅读和写作。书籍是我最好的老师，它们带我领略不同的世界，丰富我的想象力。而写作则让我学会观察生活，发现平凡中的不平凡。
+
+我知道，实现梦想的道路不会一帆风顺，但我会坚持不懈地努力。因为我相信，只要心中有梦，脚下有路，终有一天，我的文字会像蒲公英的种子一样，飘向远方，在更多人的心中生根发芽。`,
+
+                    `根据您提到的"${userMessage}"，我为您写了这篇作文：
+
+【标题：友谊的力量】
+
+友谊是人生中最珍贵的财富之一。它像一盏明灯，在黑暗中为我们指引方向；它像一把伞，在风雨中为我们遮风挡雨。
+
+记得那是一次数学考试，我因为粗心大意，成绩一落千丈。看着试卷上鲜红的分数，我的心情跌入了谷底。就在这时，我的好朋友小明走了过来，他没有嘲笑我，而是轻轻拍了拍我的肩膀，说："没关系，下次努力就好。"
+
+从那以后，小明每天放学后都会陪我一起复习数学。他耐心地为我讲解每一道错题，直到我完全明白为止。在他的帮助下，我的数学成绩逐渐提高，更重要的是，我重新找回了自信。
+
+真正的友谊不是锦上添花，而是雪中送炭。它让我们在困难时不孤单，在成功时有人分享。感谢生命中的每一位朋友，是你们让我的生活更加丰富多彩。`
+                ];
+                
+                // 随机选择一个回复，或根据用户消息内容选择更相关的回复
+                const randomIndex = Math.floor(Math.random() * responses.length);
+                return responses[randomIndex];
+            }
+            
+            // 事件监听
+            sendButton.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
